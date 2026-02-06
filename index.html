@@ -1,0 +1,1332 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OtoAnaliz AI | 100+ Kritik Gösterge</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .dark-mode { 
+            background-color: #0f172a !important; 
+            color: #f1f5f9 !important; 
+        }
+        .dark-mode .dark-card { 
+            background-color: #1e293b !important; 
+            border-color: #334155 !important; 
+        }
+        .light-card { 
+            transition: all 0.3s ease; 
+            cursor: pointer; 
+        }
+        .light-card:hover { 
+            transform: translateY(-5px); 
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); 
+        }
+        .dark-mode .light-card:hover {
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+        .category-btn.active { 
+            background: #2563eb; 
+            color: white; 
+        }
+        .level-critical { background: #dc2626; color: white; }
+        .level-danger { background: #ea580c; color: white; }
+        .level-warning { background: #f59e0b; color: black; }
+        .level-info { background: #3b82f6; color: white; }
+        .level-success { background: #10b981; color: white; }
+        .note-item { transition: all 0.2s; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen" id="body">
+    <!-- Profil Modalı -->
+    <div id="profileModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 hidden">
+        <div class="bg-white dark:bg-gray-800 w-full max-w-2xl rounded-2xl p-6 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold dark:text-white">👤 Profilim</h2>
+                <button onclick="closeProfile()" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">✕</button>
+            </div>
+            
+            <!-- Kullanıcı Bilgileri -->
+            <div id="userInfo" class="mb-8">
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                        <span id="userInitial" class="text-2xl font-bold text-blue-600 dark:text-blue-300">U</span>
+                    </div>
+                    <div>
+                        <h3 id="userName" class="text-lg font-bold dark:text-white">Kullanıcı</h3>
+                        <p id="userEmail" class="text-gray-600 dark:text-gray-400">email@example.com</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Notlar Bölümü -->
+            <div class="mb-8">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-lg dark:text-white">📝 Notlarım</h3>
+                    <button onclick="addNewNote()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700">+ Yeni Not</button>
+                </div>
+                
+                <div id="notesList" class="space-y-3">
+                    <!-- Notlar buraya eklenecek -->
+                </div>
+            </div>
+            
+            <!-- Çıkış Butonu -->
+            <button onclick="logout()" class="w-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 py-3 rounded-lg font-semibold hover:bg-red-200 dark:hover:bg-red-900/50">
+                🚪 Çıkış Yap
+            </button>
+        </div>
+    </div>
+
+    <!-- Giriş Modalı -->
+    <div id="loginModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 hidden">
+        <div class="bg-white dark:bg-gray-800 w-full max-w-md rounded-2xl p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold dark:text-white">🔐 Giriş Yap</h2>
+                <button onclick="closeLogin()" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">✕</button>
+            </div>
+            
+            <form id="loginForm" onsubmit="handleLogin(event)">
+                <input type="email" id="loginEmail" placeholder="E-posta" required class="w-full p-3 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg mb-3">
+                <input type="password" id="loginPassword" placeholder="Şifre" required class="w-full p-3 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg mb-4">
+                <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700">
+                    Giriş Yap
+                </button>
+            </form>
+            
+            <p class="text-sm text-gray-600 dark:text-gray-400 text-center mt-4">
+                Hesabın yok mu? 
+                <button onclick="switchToRegister()" class="text-blue-600 dark:text-blue-400 font-semibold">Kayıt Ol</button>
+            </p>
+        </div>
+    </div>
+
+    <!-- Kayıt Modalı -->
+    <div id="registerModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 hidden">
+        <div class="bg-white dark:bg-gray-800 w-full max-w-md rounded-2xl p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold dark:text-white">📝 Kayıt Ol</h2>
+                <button onclick="closeRegister()" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">✕</button>
+            </div>
+            
+            <form id="registerForm" onsubmit="handleRegister(event)">
+                <input type="text" id="regName" placeholder="Ad Soyad" required class="w-full p-3 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg mb-3">
+                <input type="email" id="regEmail" placeholder="E-posta" required class="w-full p-3 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg mb-3">
+                <input type="password" id="regPassword" placeholder="Şifre (min. 6 karakter)" required minlength="6" class="w-full p-3 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg mb-3">
+                <input type="tel" id="regPhone" placeholder="Telefon (opsiyonel)" class="w-full p-3 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg mb-4">
+                
+                <div class="flex items-center mb-4">
+                    <input type="checkbox" id="terms" required class="mr-2">
+                    <label for="terms" class="text-sm text-gray-600 dark:text-gray-400">
+                        <button type="button" onclick="showTerms()" class="text-blue-600 dark:text-blue-400">Kullanım Koşulları</button>'nı kabul ediyorum
+                    </label>
+                </div>
+                
+                <button type="submit" class="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700">
+                    Hesap Oluştur
+                </button>
+            </form>
+            
+            <p class="text-sm text-gray-600 dark:text-gray-400 text-center mt-4">
+                Zaten hesabın var mı? 
+                <button onclick="switchToLogin()" class="text-blue-600 dark:text-blue-400 font-semibold">Giriş Yap</button>
+            </p>
+        </div>
+    </div>
+
+    <!-- Navbar -->
+    <nav id="navbar" class="sticky top-0 z-40 bg-white dark:bg-gray-900 border-b dark:border-gray-700 px-6 py-4 transition-colors duration-300">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="bg-blue-600 p-2 rounded-lg">
+                    <span class="text-white text-xl">🚗</span>
+                </div>
+                <h1 class="text-xl font-black dark:text-white transition-colors duration-300">OTO<span class="text-blue-600">ANALİZ</span></h1>
+                <span class="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300 px-2 py-1 rounded font-bold">100+ Arıza</span>
+            </div>
+            
+            <div class="flex items-center gap-3">
+                <!-- Karanlık/Açık Mod Butonu -->
+                <button id="themeToggle" onclick="toggleTheme()" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-300">
+                    <span id="themeIcon" class="text-lg">🌙</span>
+                </button>
+                
+                <!-- Kullanıcı Butonu -->
+                <button id="userButton" onclick="showProfile()" class="bg-blue-600 text-white px-5 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors duration-300">
+                    Giriş Yap
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Ana İçerik -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+        <!-- Başlık -->
+        <div class="text-center mb-10">
+            <h1 class="text-3xl md:text-4xl font-black text-gray-900 dark:text-white mb-4 transition-colors duration-300">
+                100+ Araç Arıza Göstergesi
+            </h1>
+            <p class="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto transition-colors duration-300">
+                Tüm araç arıza lambaları, anlamları ve çözüm önerileri. 
+                En kapsamlı Türkçe arıza rehberi!
+            </p>
+        </div>
+
+        <!-- Filtre Butonları -->
+        <div class="flex flex-wrap gap-2 mb-8 justify-center">
+            <button onclick="filterLights('all')" class="category-btn active px-4 py-2 rounded-lg text-sm font-semibold bg-blue-600 text-white">
+                🔥 Hepsi (100+)
+            </button>
+            <button onclick="filterLights('motor')" class="category-btn px-4 py-2 rounded-lg text-sm font-semibold bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-300">
+                ⚙️ Motor
+            </button>
+            <button onclick="filterLights('guvenlik')" class="category-btn px-4 py-2 rounded-lg text-sm font-semibold bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-300">
+                🛡️ Güvenlik
+            </button>
+            <button onclick="filterLights('aydinlatma')" class="category-btn px-4 py-2 rounded-lg text-sm font-semibold bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-300">
+                💡 Aydınlatma
+            </button>
+            <button onclick="filterLights('mekanik')" class="category-btn px-4 py-2 rounded-lg text-sm font-semibold bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-300">
+                🔧 Mekanik
+            </button>
+            <button onclick="filterLights('hava')" class="category-btn px-4 py-2 rounded-lg text-sm font-semibold bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-300">
+                🌧️ Hava/Yol
+            </button>
+            <button onclick="filterLights('fren')" class="category-btn px-4 py-2 rounded-lg text-sm font-semibold bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-300">
+                🚦 Fren
+            </button>
+            <button onclick="filterLights('dizel')" class="category-btn px-4 py-2 rounded-lg text-sm font-semibold bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-300">
+                ⛽ Dizel
+            </button>
+        </div>
+
+        <!-- Arama Kutusu -->
+        <div class="mb-8 max-w-md mx-auto">
+            <input type="text" id="searchInput" placeholder="🔍 Arıza ara..." 
+                   class="w-full p-3 rounded-lg border dark:border-gray-600 dark:bg-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+        </div>
+
+        <!-- Arıza Kartları Grid -->
+        <div id="lightsGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            <!-- Kartlar buraya JavaScript ile eklenecek -->
+        </div>
+
+        <!-- İstatistik -->
+        <div class="mt-12 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-center">
+            <p class="text-sm text-gray-600 dark:text-gray-400">
+                Toplam <span id="totalCount" class="font-bold text-blue-600 dark:text-blue-400">100+</span> arıza gösterge, 
+                <span id="criticalCount" class="font-bold text-red-600 dark:text-red-400">25</span> kritik, 
+                <span id="warningCount" class="font-bold text-yellow-600 dark:text-yellow-400">45</span> uyarı
+            </p>
+        </div>
+
+        <!-- Detay Modal -->
+        <div id="detailModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 hidden">
+            <div class="bg-white dark:bg-gray-800 w-full max-w-lg rounded-2xl overflow-hidden transition-colors duration-300 max-h-[90vh] overflow-y-auto">
+                <div class="p-6">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <span id="modalIcon" class="text-4xl"></span>
+                            <h2 id="modalTitle" class="text-xl font-black mt-2 dark:text-white transition-colors duration-300"></h2>
+                            <span id="modalLevel" class="inline-block px-3 py-1 rounded-full text-xs font-bold mt-2"></span>
+                        </div>
+                        <button onclick="closeModal()" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors duration-300">✕</button>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <h3 class="font-semibold text-gray-900 dark:text-gray-300 mb-2 transition-colors duration-300">📝 Açıklama</h3>
+                        <p id="modalDesc" class="text-gray-600 dark:text-gray-400 transition-colors duration-300 text-sm"></p>
+                    </div>
+                    
+                    <div class="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-lg transition-colors duration-300 mb-4">
+                        <h3 class="font-semibold text-blue-900 dark:text-blue-300 mb-2 transition-colors duration-300">🚨 Acil Çözüm</h3>
+                        <p id="modalAction" class="text-gray-800 dark:text-gray-300 transition-colors duration-300 text-sm"></p>
+                    </div>
+                    
+                    <!-- Not Ekle Butonu (Sadece giriş yapmış kullanıcılar için) -->
+                    <div id="addNoteSection" class="mt-4 hidden">
+                        <button onclick="addNoteToFault()" class="text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-3 py-2 rounded-lg transition-colors duration-300">
+                            📌 Bu arızaya not ekle
+                        </button>
+                    </div>
+                    
+                    <div class="mt-6 text-sm text-gray-500 dark:text-gray-400 transition-colors duration-300">
+                        <p>⚠️ Bu bilgiler genel tavsiyedir. Her araç için farklı olabilir.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // LOCAL STORAGE YÖNETİMİ
+        const STORAGE_KEYS = {
+            USERS: 'otoanaliz_users',
+            CURRENT_USER: 'otoanaliz_current_user',
+            NOTES: 'otoanaliz_notes',
+            THEME: 'otoanaliz_theme'
+        };
+
+        // Kullanıcı verilerini saklama
+        let users = JSON.parse(localStorage.getItem(STORAGE_KEYS.USERS)) || [];
+        let currentUser = JSON.parse(localStorage.getItem(STORAGE_KEYS.CURRENT_USER)) || null;
+        let userNotes = JSON.parse(localStorage.getItem(STORAGE_KEYS.NOTES)) || [];
+        let currentTheme = localStorage.getItem(STORAGE_KEYS.THEME) || 'light';
+
+        // TEMA YÖNETİMİ
+        function initTheme() {
+            const body = document.getElementById('body');
+            const themeIcon = document.getElementById('themeIcon');
+            
+            if (currentTheme === 'dark') {
+                body.classList.add('dark-mode');
+                themeIcon.textContent = '☀️';
+                // Dark class'larını ekle
+                document.querySelectorAll('[class*="dark:"]').forEach(el => {
+                    const classes = el.className.split(' ');
+                    classes.forEach(cls => {
+                        if (cls.startsWith('dark:')) {
+                            const lightClass = cls.replace('dark:', '');
+                            el.classList.remove(lightClass);
+                            el.classList.add(cls);
+                        }
+                    });
+                });
+            } else {
+                body.classList.remove('dark-mode');
+                themeIcon.textContent = '🌙';
+            }
+        }
+
+        function toggleTheme() {
+            const body = document.getElementById('body');
+            const themeIcon = document.getElementById('themeIcon');
+            
+            if (body.classList.contains('dark-mode')) {
+                // Açık moda geç
+                body.classList.remove('dark-mode');
+                currentTheme = 'light';
+                themeIcon.textContent = '🌙';
+            } else {
+                // Karanlık moda geç
+                body.classList.add('dark-mode');
+                currentTheme = 'dark';
+                themeIcon.textContent = '☀️';
+            }
+            
+            localStorage.setItem(STORAGE_KEYS.THEME, currentTheme);
+            // Sayfayı yeniden render et
+            renderLights(currentFilter);
+        }
+
+        // Kullanıcı işlemleri
+        function handleRegister(event) {
+            event.preventDefault();
+            
+            const name = document.getElementById('regName').value.trim();
+            const email = document.getElementById('regEmail').value.trim().toLowerCase();
+            const password = document.getElementById('regPassword').value;
+            const phone = document.getElementById('regPhone').value.trim();
+            
+            // E-posta kontrolü
+            if (!isValidEmail(email)) {
+                alert('Geçerli bir e-posta adresi girin!');
+                return;
+            }
+            
+            // Şifre kontrolü
+            if (password.length < 6) {
+                alert('Şifre en az 6 karakter olmalıdır!');
+                return;
+            }
+            
+            // Kullanıcı var mı kontrolü
+            if (users.some(user => user.email === email)) {
+                alert('Bu e-posta adresi ile zaten kayıtlı bir hesap var!');
+                return;
+            }
+            
+            // Yeni kullanıcı oluştur
+            const newUser = {
+                id: Date.now(),
+                name: name,
+                email: email,
+                password: password,
+                phone: phone,
+                createdAt: new Date().toISOString()
+            };
+            
+            users.push(newUser);
+            localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
+            
+            alert(`Hoş geldin ${name}! Hesabın başarıyla oluşturuldu.`);
+            switchToLogin();
+        }
+
+        function handleLogin(event) {
+            event.preventDefault();
+            
+            const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+            const password = document.getElementById('loginPassword').value;
+            
+            // Kullanıcıyı bul
+            const user = users.find(u => u.email === email && u.password === password);
+            
+            if (user) {
+                currentUser = user;
+                localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(currentUser));
+                
+                // Kullanıcı notlarını yükle
+                userNotes = JSON.parse(localStorage.getItem(STORAGE_KEYS.NOTES)) || [];
+                
+                closeLogin();
+                updateUI();
+                alert(`Hoş geldin ${user.name}!`);
+            } else {
+                alert('E-posta veya şifre hatalı!');
+            }
+        }
+
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
+            closeProfile();
+            updateUI();
+            alert('Başarıyla çıkış yapıldı.');
+        }
+
+        // Not işlemleri
+        function addNewNote() {
+            const noteText = prompt('Notunuzu yazın:');
+            if (noteText && noteText.trim()) {
+                const newNote = {
+                    id: Date.now(),
+                    userId: currentUser.id,
+                    text: noteText.trim(),
+                    createdAt: new Date().toISOString(),
+                    relatedFault: null
+                };
+                
+                userNotes.push(newNote);
+                localStorage.setItem(STORAGE_KEYS.NOTES, JSON.stringify(userNotes));
+                loadUserNotes();
+            }
+        }
+
+        function addNoteToFault() {
+            const faultTitle = document.getElementById('modalTitle').textContent;
+            const noteText = prompt(`"${faultTitle}" ile ilgili notunuz:`, '');
+            
+            if (noteText && noteText.trim()) {
+                const newNote = {
+                    id: Date.now(),
+                    userId: currentUser.id,
+                    text: noteText.trim(),
+                    createdAt: new Date().toISOString(),
+                    relatedFault: faultTitle
+                };
+                
+                userNotes.push(newNote);
+                localStorage.setItem(STORAGE_KEYS.NOTES, JSON.stringify(userNotes));
+                loadUserNotes();
+                alert('Not kaydedildi!');
+            }
+        }
+
+        function deleteNote(noteId) {
+            if (confirm('Bu notu silmek istediğinize emin misiniz?')) {
+                userNotes = userNotes.filter(note => note.id !== noteId);
+                localStorage.setItem(STORAGE_KEYS.NOTES, JSON.stringify(userNotes));
+                loadUserNotes();
+            }
+        }
+
+        function loadUserNotes() {
+            if (!currentUser) return;
+            
+            const notesList = document.getElementById('notesList');
+            const userNotesFiltered = userNotes.filter(note => note.userId === currentUser.id);
+            
+            if (userNotesFiltered.length === 0) {
+                notesList.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-center py-4">Henüz notunuz yok.</p>';
+                return;
+            }
+            
+            notesList.innerHTML = userNotesFiltered.map(note => `
+                <div class="note-item bg-gray-50 dark:bg-gray-700 p-3 rounded-lg transition-colors duration-300">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <p class="text-gray-800 dark:text-gray-300 mb-1 transition-colors duration-300">${note.text}</p>
+                            ${note.relatedFault ? 
+                                `<span class="inline-block bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300 text-xs px-2 py-1 rounded transition-colors duration-300">${note.relatedFault}</span>` : 
+                                ''
+                            }
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-2 transition-colors duration-300">
+                                ${new Date(note.createdAt).toLocaleDateString('tr-TR')}
+                            </p>
+                        </div>
+                        <button onclick="deleteNote(${note.id})" class="text-red-500 hover:text-red-700 ml-2 transition-colors duration-300">✕</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // UI güncelleme
+        function updateUI() {
+            const userButton = document.getElementById('userButton');
+            const addNoteSection = document.getElementById('addNoteSection');
+            
+            if (currentUser) {
+                userButton.textContent = '👤 Profil';
+                userButton.onclick = showProfile;
+                addNoteSection.classList.remove('hidden');
+                
+                // Profil bilgilerini güncelle
+                document.getElementById('userName').textContent = currentUser.name;
+                document.getElementById('userEmail').textContent = currentUser.email;
+                document.getElementById('userInitial').textContent = currentUser.name.charAt(0).toUpperCase();
+                
+                loadUserNotes();
+            } else {
+                userButton.textContent = 'Giriş Yap';
+                userButton.onclick = showLogin;
+                addNoteSection.classList.add('hidden');
+            }
+        }
+
+        // Yardımcı fonksiyonlar
+        function isValidEmail(email) {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        }
+
+        function showProfile() {
+            if (!currentUser) {
+                showLogin();
+                return;
+            }
+            document.getElementById('profileModal').classList.remove('hidden');
+        }
+
+        function closeProfile() {
+            document.getElementById('profileModal').classList.add('hidden');
+        }
+
+        function showLogin() {
+            closeAllModals();
+            document.getElementById('loginModal').classList.remove('hidden');
+        }
+
+        function closeLogin() {
+            document.getElementById('loginModal').classList.add('hidden');
+        }
+
+        function switchToRegister() {
+            closeLogin();
+            document.getElementById('registerModal').classList.remove('hidden');
+        }
+
+        function switchToLogin() {
+            closeRegister();
+            document.getElementById('loginModal').classList.remove('hidden');
+        }
+
+        function closeRegister() {
+            document.getElementById('registerModal').classList.add('hidden');
+        }
+
+        function closeAllModals() {
+            document.getElementById('loginModal').classList.add('hidden');
+            document.getElementById('registerModal').classList.add('hidden');
+            document.getElementById('profileModal').classList.add('hidden');
+            document.getElementById('detailModal').classList.add('hidden');
+        }
+
+        function showTerms() {
+            alert('Kullanım Koşulları:\n\n1. Bu site eğitim amaçlıdır.\n2. Verileriniz tarayıcıda saklanır.\n3. Gerçek bir otomotiv uygulaması değildir.');
+        }
+
+        // ARIZA VERİLERİ - TÜM YENİ ARIZALAR EKLENDİ!
+        const arızaData = [
+            // MOTOR ARIZALARI
+            { 
+                cat: 'motor', 
+                title: 'Hararet İkaz Lambası', 
+                icon: '🌡️', 
+                level: 'critical', 
+                desc: 'Motor sıcaklığının olması gerekenden fazla olduğu anlamına gelir.', 
+                action: 'Aracı durdurup motorun soğumasını bekleyin. Soğutma suyu seviyesi, fan çalışması, radyatör kapağı ve kaçakları kontrol edin.' 
+            },
+            { 
+                cat: 'motor', 
+                title: 'Akü Sistemi İkaz Lambası', 
+                icon: '🔋', 
+                level: 'danger', 
+                desc: 'Aküde veya alternatörde sorun olduğunu gösterir.', 
+                action: 'Elektrikli aksamları kapatıp servise gidin. Marş basmadan önce şarj sistemini kontrol ettirin.' 
+            },
+            { 
+                cat: 'motor', 
+                title: 'Yağ Basıncı İkaz Lambası', 
+                icon: '🛢️', 
+                level: 'critical', 
+                desc: 'Motor yağ basıncı çok düşük. Motor aşırı ısınabilir.', 
+                action: 'Hemen durun, motoru kapatın. Yağ seviyesini ve basıncını kontrol edin.' 
+            },
+            { 
+                cat: 'motor', 
+                title: 'Motor ARIZA Lambası', 
+                icon: '⚙️', 
+                level: 'critical', 
+                desc: 'Motor yönetim sisteminde ciddi bir hata var.', 
+                action: 'Hemen servise gidin! Motor performansı sınırlanmış olabilir.' 
+            },
+            { 
+                cat: 'motor', 
+                title: 'Egzoz ARIZASI', 
+                icon: '💨', 
+                level: 'warning', 
+                desc: 'Egzoz emisyon değerleri normalin üzerinde.', 
+                action: 'En kısa sürede servise gidin, yakıt tüketimi artabilir.' 
+            },
+            { 
+                cat: 'motor', 
+                title: 'EGR ARIZASI', 
+                icon: '🔄', 
+                level: 'warning', 
+                desc: 'Egzoz gazı devridaim sistemi arızalı.', 
+                action: 'Yakıt tüketimi artabilir, servise gidin.' 
+            },
+            { 
+                cat: 'motor', 
+                title: 'Turbo Basıncı', 
+                icon: '💨', 
+                level: 'danger', 
+                desc: 'Turbo şarj basıncı düşük. Motor gücü azalır.', 
+                action: 'Servise gidin, turbo hortumlarını kontrol ettirin.' 
+            },
+            { 
+                cat: 'motor', 
+                title: 'Tıkanmış Hava Filtresi', 
+                icon: '🌬️', 
+                level: 'warning', 
+                desc: 'Motora giden hava akışı ciddi derecede azaldı.', 
+                action: 'Hava filtrenizi temizleyin veya değiştirin.' 
+            },
+            { 
+                cat: 'motor', 
+                title: 'Katalitik Konvertör', 
+                icon: '🔥', 
+                level: 'danger', 
+                desc: 'Egzoz sisteminde sorun. Aşırı ısınma veya hasar olabilir.', 
+                action: 'Hemen servise gidin, performans düşer.' 
+            },
+            { 
+                cat: 'motor', 
+                title: 'Servis Arızası İkaz', 
+                icon: '🛠️', 
+                level: 'info', 
+                desc: 'Kilometre bakımının yaklaştığını hatırlatır.', 
+                action: 'Aracınızı bakıma almanız gerekiyor.' 
+            },
+
+            // FREN SİSTEMİ
+            { 
+                cat: 'fren', 
+                title: 'Fren İkaz Lambası', 
+                icon: '🅿️', 
+                level: 'warning', 
+                desc: 'El freni çekili veya fren sistemi hatası. Hidrolik basınç kaybı olabilir.', 
+                action: 'El frenini kontrol edin. Yanmaya devam ediyorsa fren sistemini kontrol ettirin.' 
+            },
+            { 
+                cat: 'fren', 
+                title: 'Fren Balatası İkaz', 
+                icon: '⭕', 
+                level: 'warning', 
+                desc: 'Fren balataları fazlasıyla aşınmış, değiştirilmesi gerek.', 
+                action: 'En geç 500 km içinde balataları değiştirin.' 
+            },
+            { 
+                cat: 'fren', 
+                title: 'Fren Hidroliği İkaz', 
+                icon: '💧', 
+                level: 'danger', 
+                desc: 'Fren hidrolik seviyesi standardın altına düştü.', 
+                action: 'Hemen fren hidroliği ekleyin veya servise gidin.' 
+            },
+            { 
+                cat: 'fren', 
+                title: 'Fren Pedalı İkaz', 
+                icon: '👣', 
+                level: 'danger', 
+                desc: 'Fren sisteminde arıza oluştu.', 
+                action: 'Hemen servise başvurun, frenleme performansı düşebilir.' 
+            },
+            { 
+                cat: 'fren', 
+                title: 'Fren Tutma İkaz', 
+                icon: '⏸️', 
+                level: 'info', 
+                desc: 'Fren tutma sisteminin düzgün çalıştığını gösterir.', 
+                action: 'Normal çalışma, müdahale gerekmez.' 
+            },
+            { 
+                cat: 'fren', 
+                title: 'Fren Lambası İkaz', 
+                icon: '💡', 
+                level: 'warning', 
+                desc: 'Fren lambalarınız çalışmıyor.', 
+                action: 'Fren lambalarınızı mutlaka kontrol ettirin.' 
+            },
+            { 
+                cat: 'fren', 
+                title: 'Elektrikli Park Freni', 
+                icon: '🔌', 
+                level: 'warning', 
+                desc: 'Elektrikli park freninde sorun var.', 
+                action: 'Servise başvurun, park freni çalışmayabilir.' 
+            },
+            { 
+                cat: 'fren', 
+                title: 'ABS İkaz Lambası', 
+                icon: '🚫', 
+                level: 'warning', 
+                desc: 'Fren kilitlenme önleyici sistem devre dışı veya arızalı.', 
+                action: 'Sert fren yapmaktan kaçının, kontrollü sürün.' 
+            },
+
+            // GÜVENLİK SİSTEMLERİ
+            { 
+                cat: 'guvenlik', 
+                title: 'AIRBAG ARIZASI', 
+                icon: '💥', 
+                level: 'danger', 
+                desc: 'Hava yastığı sistemi devre dışı. Kazalarda açılmayabilir.', 
+                action: 'Hemen servise gidin, can güvenliği riski!' 
+            },
+            { 
+                cat: 'guvenlik', 
+                title: 'Yan Hava Yastığı İkaz', 
+                icon: '🛡️', 
+                level: 'danger', 
+                desc: 'Yan hava yastıkları devre dışı kaldı veya arızalı.', 
+                action: 'Hava yastığı sistemini kontrol ettirin.' 
+            },
+            { 
+                cat: 'guvenlik', 
+                title: 'Hava Yastığı Devre Dışı', 
+                icon: '🚫', 
+                level: 'warning', 
+                desc: 'Hava yastığı sisteminiz devre dışı.', 
+                action: 'Sistemi aktif hale getirin veya servise gidin.' 
+            },
+            { 
+                cat: 'guvenlik', 
+                title: 'ESC/ESP İkaz Lambası', 
+                icon: '🔄', 
+                level: 'warning', 
+                desc: 'Denge kontrol sistemi aktif veya devre dışı.', 
+                action: '"OFF" yazıyorsa sistem devre dışı, güvenli sürüş yapın.' 
+            },
+            { 
+                cat: 'guvenlik', 
+                title: 'Çekiş Kontrolü İkaz', 
+                icon: '🚗', 
+                level: 'warning', 
+                desc: 'Aracın çekiş kontrolünde problem var.', 
+                action: 'Kaygan zeminde dikkatli sürün, sistem arızalı olabilir.' 
+            },
+            { 
+                cat: 'guvenlik', 
+                title: 'Park Freni İkaz', 
+                icon: 'Ⓟ', 
+                level: 'info', 
+                desc: 'Otomatik vites araçlarda vites park konumunda.', 
+                action: 'Normal çalışma, müdahale gerekmez.' 
+            },
+            { 
+                cat: 'guvenlik', 
+                title: 'Çocuk Güvenlik Kilidi', 
+                icon: '👶', 
+                level: 'info', 
+                desc: 'Çocuk güvenlik kilidi etkin.', 
+                action: 'Arka kapılar içeriden açılamaz, normal çalışma.' 
+            },
+            { 
+                cat: 'guvenlik', 
+                title: 'Takip Mesafesi İkaz', 
+                icon: '📏', 
+                level: 'warning', 
+                desc: 'Güvenli takip mesafesi aşıldı.', 
+                action: 'Önünüzdeki araç ile aranızı açın.' 
+            },
+            { 
+                cat: 'guvenlik', 
+                title: 'İleri Çarpışma İkaz', 
+                icon: '⚠️', 
+                level: 'danger', 
+                desc: 'Olası bir çarpışma tespit edildi.', 
+                action: 'Fren yapın ve güvenli mesafe bırakın.' 
+            },
+            { 
+                cat: 'guvenlik', 
+                title: 'Kör Nokta İkaz', 
+                icon: '👁️', 
+                level: 'warning', 
+                desc: 'Kör noktanızda araç veya engel tespit edildi.', 
+                action: 'Şerit değiştirmeyin, dikkatli olun.' 
+            },
+
+            // AYDINLATMA
+            { 
+                cat: 'aydinlatma', 
+                title: 'Kısa Far İkaz', 
+                icon: '💡', 
+                level: 'info', 
+                desc: 'Kısa farlar açık.', 
+                action: 'Gereksizse kapatın, batarya tüketimini azaltın.' 
+            },
+            { 
+                cat: 'aydinlatma', 
+                title: 'Uzun Far İkaz', 
+                icon: '🔦', 
+                level: 'info', 
+                desc: 'Uzun farlar açık.', 
+                action: 'Karşıdan araç geliyorsa kısa farlara geçin.' 
+            },
+            { 
+                cat: 'aydinlatma', 
+                title: 'Far Seviyesi İkaz', 
+                icon: '📐', 
+                level: 'warning', 
+                desc: 'Far seviyesi kontrol sisteminde arıza.', 
+                action: 'Far ayarlarını kontrol ettirin.' 
+            },
+            { 
+                cat: 'aydinlatma', 
+                title: 'Ön Sis Lambası', 
+                icon: '🌫️', 
+                level: 'info', 
+                desc: 'Ön sis lambaları açık.', 
+                action: 'Sis yoksa kapatın, diğer sürücüleri rahatsız etmeyin.' 
+            },
+            { 
+                cat: 'aydinlatma', 
+                title: 'Arka Sis Lambası', 
+                icon: '🔴', 
+                level: 'info', 
+                desc: 'Arka sis lambaları açık.', 
+                action: 'Sadece yoğun siste kullanın, arkadan gelenleri rahatsız etmeyin.' 
+            },
+            { 
+                cat: 'aydinlatma', 
+                title: 'Dış Aydınlatma İkaz', 
+                icon: '🚨', 
+                level: 'warning', 
+                desc: 'Dış ışıklardan en az biri arızalı.', 
+                action: 'Tüm dış ışıkları kontrol edin, ampul değiştirin.' 
+            },
+            { 
+                cat: 'aydinlatma', 
+                title: 'Adaptif Far İkaz', 
+                icon: '🤖', 
+                level: 'info', 
+                desc: 'Adaptif far sistemi aktif.', 
+                action: 'Sistem otomatik olarak far ayarı yapar.' 
+            },
+            { 
+                cat: 'aydinlatma', 
+                title: 'Otomatik Uzun Far', 
+                icon: '⚡', 
+                level: 'info', 
+                desc: 'Otomatik uzun far sistemi aktif.', 
+                action: 'Sistem otomatik olarak uzun/kısa geçiş yapar.' 
+            },
+
+            // MEKANİK
+            { 
+                cat: 'mekanik', 
+                title: 'Direksiyon Kilidi', 
+                icon: '🔒', 
+                level: 'danger', 
+                desc: 'Direksiyon simidi kilitli ve hareket ettirilemiyor.', 
+                action: 'Anahtarı kontağa takın, direksiyonu tam tur çevirmeyi deneyin.' 
+            },
+            { 
+                cat: 'mekanik', 
+                title: 'Şanzıman ARIZASI', 
+                icon: '⚡', 
+                level: 'critical', 
+                desc: 'Vites kutusunda ciddi arıza. Vites geçişleri zorlaşabilir.', 
+                action: 'Hemen servise çekici ile götürün.' 
+            },
+            { 
+                cat: 'mekanik', 
+                title: 'Lastik Basınç İkaz', 
+                icon: '🌀', 
+                level: 'warning', 
+                desc: 'Lastiklerden en az birinin basıncı düşük.', 
+                action: 'Lastik basınçlarını kontrol edin, hava basın.' 
+            },
+            { 
+                cat: 'mekanik', 
+                title: 'Süspansiyon Amortisörü', 
+                icon: '🏎️', 
+                level: 'warning', 
+                desc: 'Süspansiyon sisteminde sorun var.', 
+                action: 'Yavaş sürün, engebeli yollardan kaçının.' 
+            },
+            { 
+                cat: 'mekanik', 
+                title: 'Hava Süspansiyonu', 
+                icon: '💨', 
+                level: 'warning', 
+                desc: 'Hava süspansiyonunda sorun var.', 
+                action: 'Seyir yüksekliği değişebilir, servise gidin.' 
+            },
+            { 
+                cat: 'mekanik', 
+                title: '4WD İkaz Lambası', 
+                icon: '🚜', 
+                level: 'warning', 
+                desc: '4 çeker sisteminde arıza var.', 
+                action: 'Sistem devre dışı olabilir, dikkatli sürün.' 
+            },
+            { 
+                cat: 'mekanik', 
+                title: 'Otomatik Vites İkaz', 
+                icon: '🔄', 
+                level: 'danger', 
+                desc: 'Şanzıman sisteminde arıza.', 
+                action: 'Servisinizi arayın, vites değişiminde sorun yaşayabilirsiniz.' 
+            },
+
+            // HAVA/YOL KOŞULLARI
+            { 
+                cat: 'hava', 
+                title: 'Buzlanma İkaz', 
+                icon: '❄️', 
+                level: 'warning', 
+                desc: 'Dış sıcaklık çok düşük, yol buzlanmış olabilir.', 
+                action: 'Hızınızı düşürün, ani fren ve direksiyon hareketlerinden kaçının.' 
+            },
+            { 
+                cat: 'hava', 
+                title: 'Ön Cam Buğu', 
+                icon: '🌫️', 
+                level: 'info', 
+                desc: 'Ön cam buz çözücü aktif.', 
+                action: 'Cam temizlenince kapatın, batarya tüketimini azaltın.' 
+            },
+            { 
+                cat: 'hava', 
+                title: 'Arka Cam Buğu', 
+                icon: '🔍', 
+                level: 'info', 
+                desc: 'Arka cam buğu çözme rezistansı aktif.', 
+                action: 'Cam temizlenince kapatın.' 
+            },
+            { 
+                cat: 'hava', 
+                title: 'Ön Cam Yıkama Sıvı', 
+                icon: '💧', 
+                level: 'info', 
+                desc: 'Cam yıkama suyu azalmış.', 
+                action: 'Cam yıkama suyu ekleyin.' 
+            },
+            { 
+                cat: 'hava', 
+                title: 'Kış Modu İkaz', 
+                icon: '⛄', 
+                level: 'info', 
+                desc: 'Araç kış modunda kullanılıyor.', 
+                action: 'Kaygan zeminde daha güvenli kalkış sağlar.' 
+            },
+            { 
+                cat: 'hava', 
+                title: 'Yağmur ve Işık Sensörü', 
+                icon: '🌧️', 
+                level: 'info', 
+                desc: 'Yağmur ve ışık sensörü aktif.', 
+                action: 'Sistem otomatik olarak silecek ve farları yönetir.' 
+            },
+            { 
+                cat: 'hava', 
+                title: 'Otomatik Ön Cam Silme', 
+                icon: '🧹', 
+                level: 'info', 
+                desc: 'Ön cam silecekleri otomatik modda.', 
+                action: 'Sistem yağmura göre otomatik çalışır.' 
+            },
+
+            // DİZEL ARAÇLAR
+            { 
+                cat: 'dizel', 
+                title: 'Kızdırma Bujisi', 
+                icon: '🔥', 
+                level: 'info', 
+                desc: 'Motor kızdırma bujileri ısınıyor.', 
+                action: 'Işık sönene kadar motoru çalıştırmayın.' 
+            },
+            { 
+                cat: 'dizel', 
+                title: 'Yakıt Filtresi İkaz', 
+                icon: '🚰', 
+                level: 'warning', 
+                desc: 'Dizel yakıt filtresi dolu veya su var.', 
+                action: 'Yakıt filtresini boşaltın veya değiştirin.' 
+            },
+            { 
+                cat: 'dizel', 
+                title: 'Egzoz Sıvısı İkaz', 
+                icon: '💧', 
+                level: 'warning', 
+                desc: 'Dizel egzoz sıvısı (AdBlue) seviyesi düşük.', 
+                action: 'AdBlue ekleyin, biterse motor çalışmayı durdurabilir.' 
+            },
+            { 
+                cat: 'dizel', 
+                title: 'Su Sıvısı Filtresi', 
+                icon: '💦', 
+                level: 'warning', 
+                desc: 'Yakıt filtresindeki su maksimum seviyede.', 
+                action: 'Filtreden suyu boşaltın.' 
+            },
+            { 
+                cat: 'dizel', 
+                title: 'DPF Dolu', 
+                icon: '🚫', 
+                level: 'warning', 
+                desc: 'Dizel partikül filtresi doldu.', 
+                action: '20 dakika yüksek devirde sürün veya serviste temizletin.' 
+            },
+
+            // DİĞER
+            { 
+                cat: 'motor', 
+                title: 'Düşük Yakıt İkaz', 
+                icon: '⛽', 
+                level: 'warning', 
+                desc: 'Yakıt seviyesi çok düşük. Bitmek üzere.', 
+                action: 'En yakın benzinliğe gidin, en az 10 litre alın.' 
+            },
+            { 
+                cat: 'guvenlik', 
+                title: 'Yakıt Kapağı İkaz', 
+                icon: '⛽', 
+                level: 'warning', 
+                desc: 'Yakıt kapağı açık kaldı.', 
+                action: 'Yakıt kapağını kapatın.' 
+            },
+            { 
+                cat: 'guvenlik', 
+                title: 'Açık Kapı İkaz', 
+                icon: '🚪', 
+                level: 'warning', 
+                desc: 'En az bir kapı düzgün kapatılmamış.', 
+                action: 'Tüm kapıları kontrol edin ve kapatın.' 
+            },
+            { 
+                cat: 'guvenlik', 
+                title: 'Açık Kaput İkaz', 
+                icon: '🔧', 
+                level: 'warning', 
+                desc: 'Kaput düzgün kapatılmamış veya açık unutulmuş.', 
+                action: 'Kaputu kontrol edin ve kapatın.' 
+            },
+            { 
+                cat: 'guvenlik', 
+                title: 'Anahtar Araçta Değil', 
+                icon: '🔑', 
+                level: 'info', 
+                desc: 'Anahtarsız giriş sisteminde anahtar araç içinde değil.', 
+                action: 'Anahtarı aracın içine getirin.' 
+            },
+            { 
+                cat: 'motor', 
+                title: 'Düşük Anahtar Pili', 
+                icon: '🔋', 
+                level: 'warning', 
+                desc: 'Araç anahtarının pili azaldı.', 
+                action: 'Anahtar pilini değiştirin.' 
+            },
+            { 
+                cat: 'motor', 
+                title: 'Kontak Anahtarı İkaz', 
+                icon: '🗝️', 
+                level: 'warning', 
+                desc: 'Anahtar sisteminde veya anahtarda sorun var.', 
+                action: 'Anahtarı ve sistemini kontrol ettirin.' 
+            },
+            { 
+                cat: 'motor', 
+                title: 'Fan İkaz Lambası', 
+                icon: '🌀', 
+                level: 'info', 
+                desc: 'Havalandırma fanı çalışıyor.', 
+                action: 'Normal çalışma, müdahale gerekmez.' 
+            },
+            { 
+                cat: 'motor', 
+                title: 'Araç İçi Hava Sirkülasyonu', 
+                icon: '🔄', 
+                level: 'info', 
+                desc: 'İçeriden hava sirkülasyonu yapılıyor.', 
+                action: 'Dışarısı soğuksa ısı kaybını önler.' 
+            },
+
+            // GELİŞMİŞ SİSTEMLER
+            { 
+                cat: 'guvenlik', 
+                title: 'Şerit Kalkış İkaz', 
+                icon: '🛣️', 
+                level: 'warning', 
+                desc: 'Sinyal vermeden şerit değiştirildi.', 
+                action: 'Şerit değiştirirken sinyal verin.' 
+            },
+            { 
+                cat: 'guvenlik', 
+                title: 'Şerit Yardımı İkaz', 
+                icon: '🛡️', 
+                level: 'info', 
+                desc: 'Şerit destek sistemi açık.', 
+                action: 'Sistem şeritte kalmanıza yardımcı olur.' 
+            },
+            { 
+                cat: 'motor', 
+                title: 'ECO Mod İkaz', 
+                icon: '🌿', 
+                level: 'success', 
+                desc: 'Araç ekonomik modda kullanılıyor.', 
+                action: 'Yakıt tüketimi azalır, performans düşebilir.' 
+            },
+            { 
+                cat: 'motor', 
+                title: 'Hız Sabitleyici', 
+                icon: '🎯', 
+                level: 'info', 
+                desc: 'Hız sabitleme sistemi etkin.', 
+                action: 'Araç belirlenen hızda gider, gaz veya frene basınca devre dışı kalır.' 
+            },
+            { 
+                cat: 'motor', 
+                title: 'Adaptif Hız Sabitleyici', 
+                icon: '🚘', 
+                level: 'info', 
+                desc: 'Adaptif hız sabitleyici aktif.', 
+                action: 'Öndeki araca göre hızı otomatik ayarlar.' 
+            },
+            { 
+                cat: 'motor', 
+                title: 'Hız Sınırlayıcı', 
+                icon: '📉', 
+                level: 'info', 
+                desc: 'Hız sınırlandırıcı fonksiyonu aktif.', 
+                action: 'Araç belirlenen hızı aşamaz.' 
+            },
+            { 
+                cat: 'motor', 
+                title: 'Yokuş İniş Kontrolü', 
+                icon: '⛰️', 
+                level: 'info', 
+                desc: 'Yokuş inerken hızı koruyan sistem aktif.', 
+                action: 'Sistem otomatik frenleme yapar.' 
+            },
+            { 
+                cat: 'guvenlik', 
+                title: 'Otomatik Park Pilotu', 
+                icon: '🅿️', 
+                level: 'info', 
+                desc: 'Park pilotu asistanı aktif.', 
+                action: 'Sistem park etmenize yardımcı olur.' 
+            },
+            { 
+                cat: 'guvenlik', 
+                title: 'Acil Durum Fren Sistemi', 
+                icon: '🆘', 
+                level: 'warning', 
+                desc: 'Acil durum fren sistemi kapatıldı veya sensör engellendi.', 
+                action: 'Sensörü temizleyin veya sistemi aktif edin.' 
+            },
+            { 
+                cat: 'mekanik', 
+                title: 'Arka Spoiler İkaz', 
+                icon: '✈️', 
+                level: 'warning', 
+                desc: 'Arka rüzgarlık sisteminde arıza.', 
+                action: 'Spoiler sistemini kontrol ettirin.' 
+            },
+            { 
+                cat: 'mekanik', 
+                title: 'Çatı İkaz Lambası', 
+                icon: '🌅', 
+                level: 'warning', 
+                desc: 'Cabrio araçlarda tavan sisteminde arıza.', 
+                action: 'Tavan açma/kapama sistemini kontrol ettirin.' 
+            },
+            { 
+                cat: 'mekanik', 
+                title: 'Dorse Çeki Demiri', 
+                icon: '🚛', 
+                level: 'warning', 
+                desc: 'Römork çekme kancasının kilidi açık.', 
+                action: 'Kancanın kilidini kontrol edin ve kapatın.' 
+            },
+            { 
+                cat: 'motor', 
+                title: 'Bilgi İkaz Lambası', 
+                icon: 'ℹ️', 
+                level: 'info', 
+                desc: 'Bazı uyarılar hakkında bilgi verir.', 
+                action: 'Ekrana dokunarak uyarı sebebini görebilirsiniz.' 
+            }
+        ];
+
+        // Arama ve filtreleme
+        let currentFilter = 'all';
+        
+        function renderLights(filter = 'all', searchTerm = '') {
+            const grid = document.getElementById('lightsGrid');
+            let filteredData = arızaData;
+            
+            // Kategori filtreleme
+            if (filter !== 'all') {
+                filteredData = arızaData.filter(item => item.cat === filter);
+            }
+            
+            // Arama filtreleme
+            if (searchTerm) {
+                const term = searchTerm.toLowerCase();
+                filteredData = filteredData.filter(item => 
+                    item.title.toLowerCase().includes(term) || 
+                    item.desc.toLowerCase().includes(term) ||
+                    item.action.toLowerCase().includes(term)
+                );
+            }
+            
+            // İstatistik güncelle
+            updateStats(filteredData);
+            
+            const isDarkMode = document.body.classList.contains('dark-mode');
+            
+            grid.innerHTML = filteredData.map(item => {
+                let levelClass = '';
+                let levelText = '';
+                switch(item.level) {
+                    case 'critical': levelClass = 'level-critical'; levelText = 'KRİTİK'; break;
+                    case 'danger': levelClass = 'level-danger'; levelText = 'TEHLİKE'; break;
+                    case 'warning': levelClass = 'level-warning'; levelText = 'UYARI'; break;
+                    case 'info': levelClass = 'level-info'; levelText = 'BİLGİ'; break;
+                    case 'success': levelClass = 'level-success'; levelText = 'ECO'; break;
+                }
+                
+                const bgColor = isDarkMode ? 'bg-gray-800' : 'bg-white';
+                const textColor = isDarkMode ? 'text-white' : 'text-gray-800';
+                const borderColor = isDarkMode ? 'border-gray-700' : 'border-gray-200';
+                const descColor = isDarkMode ? 'text-gray-400' : 'text-gray-600';
+                const hoverColor = isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50';
+                
+                return `
+                    <div class="light-card ${bgColor} ${textColor} p-4 rounded-xl border ${borderColor} ${hoverColor}" onclick="openDetailModal(${JSON.stringify(item).replace(/"/g, '&quot;')})">
+                        <div class="flex items-start justify-between">
+                            <span class="text-3xl">${item.icon}</span>
+                            <span class="${levelClass} px-2 py-1 rounded text-xs font-bold">${levelText}</span>
+                        </div>
+                        <h3 class="font-black text-sm mt-3 mb-1">${item.title}</h3>
+                        <p class="text-xs ${descColor} line-clamp-2">${item.desc}</p>
+                        <div class="mt-3 text-xs text-blue-600 dark:text-blue-400 font-semibold">Detay için tıkla →</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateStats(data) {
+            const total = data.length;
+            const critical = data.filter(item => item.level === 'critical').length;
+            const warning = data.filter(item => item.level === 'warning' || item.level === 'danger').length;
+            
+            document.getElementById('totalCount').textContent = total;
+            document.getElementById('criticalCount').textContent = critical;
+            document.getElementById('warningCount').textContent = warning;
+        }
+
+        function filterLights(category) {
+            currentFilter = category;
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.classList.remove('active', 'bg-blue-600', 'text-white');
+                const isDarkMode = document.body.classList.contains('dark-mode');
+                btn.classList.add(isDarkMode ? 'bg-gray-800' : 'bg-gray-100', isDarkMode ? 'text-gray-300' : 'text-gray-800');
+            });
+            
+            event.target.classList.add('active', 'bg-blue-600', 'text-white');
+            event.target.classList.remove('bg-gray-100', 'bg-gray-800', 'text-gray-300', 'text-gray-800');
+            
+            const searchTerm = document.getElementById('searchInput').value;
+            renderLights(category, searchTerm);
+        }
+
+        // Arama işlevi
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            const searchTerm = e.target.value;
+            renderLights(currentFilter, searchTerm);
+        });
+
+        function openDetailModal(item) {
+            document.getElementById('modalIcon').textContent = item.icon;
+            document.getElementById('modalTitle').textContent = item.title;
+            document.getElementById('modalDesc').textContent = item.desc;
+            document.getElementById('modalAction').textContent = item.action;
+            
+            const levelSpan = document.getElementById('modalLevel');
+            let levelText = '';
+            switch(item.level) {
+                case 'critical': levelText = 'KRİTİK ARIZA'; levelSpan.className = 'level-critical px-3 py-1 rounded-full text-xs font-bold'; break;
+                case 'danger': levelText = 'TEHLİKELİ'; levelSpan.className = 'level-danger px-3 py-1 rounded-full text-xs font-bold'; break;
+                case 'warning': levelText = 'UYARI'; levelSpan.className = 'level-warning px-3 py-1 rounded-full text-xs font-bold'; break;
+                case 'info': levelText = 'BİLGİ'; levelSpan.className = 'level-info px-3 py-1 rounded-full text-xs font-bold'; break;
+                case 'success': levelText = 'ECO MOD'; levelSpan.className = 'level-success px-3 py-1 rounded-full text-xs font-bold'; break;
+            }
+            levelSpan.textContent = levelText;
+            
+            document.getElementById('detailModal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('detailModal').classList.add('hidden');
+        }
+
+        // Modal dışına tıklama
+        window.onclick = function(event) {
+            if (event.target.id === 'detailModal' || event.target.id === 'loginModal' || 
+                event.target.id === 'registerModal' || event.target.id === 'profileModal') {
+                closeAllModals();
+            }
+        }
+
+        // Sayfa yüklendiğinde
+        document.addEventListener('DOMContentLoaded', function() {
+            initTheme();
+            renderLights();
+            updateUI();
+            
+            // Demo kullanıcı ekle (test için)
+            if (users.length === 0) {
+                users.push({
+                    id: 1,
+                    name: 'Demo Kullanıcı',
+                    email: 'demo@otoanaliz.com',
+                    password: '123456',
+                    phone: '5551234567',
+                    createdAt: new Date().toISOString()
+                });
+                localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
+            }
+        });
+    </script>
+</body>
+</html>
